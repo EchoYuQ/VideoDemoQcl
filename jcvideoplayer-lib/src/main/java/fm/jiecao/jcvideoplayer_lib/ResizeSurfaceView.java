@@ -24,8 +24,8 @@ class ResizeSurfaceView extends SurfaceView {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         //Log.i("@@@@", "onMeasure(" + MeasureSpec.toString(widthMeasureSpec) + ", "
         //        + MeasureSpec.toString(heightMeasureSpec) + ")");
-        int mVideoWidth = JCMediaManager.intance().currentVideoWidth;
-        int mVideoHeight = JCMediaManager.intance().currentVideoHeight;
+        int mVideoWidth = JCMediaManager.instance().currentVideoWidth;
+        int mVideoHeight = JCMediaManager.instance().currentVideoHeight;
 
         int width = getDefaultSize(mVideoWidth, widthMeasureSpec);
         int height = getDefaultSize(mVideoHeight, heightMeasureSpec);

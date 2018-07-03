@@ -28,19 +28,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         EventBus.getDefault().register(this);
 
         videoController1 = (JCVideoPlayer) findViewById(R.id.videocontroller1);
-        videoController1.setUp("http://2449.vod.myqcloud.com/2449_43b6f696980311e59ed467f22794e792.f20.mp4",
+        videoController1.setUp("http://stream.youdao.com/private/xuetang/pushstation.2450_1_5_screen_2017_03_14_07_48_21.mp4",
                 "http://p.qpic.cn/videoyun/0/2449_43b6f696980311e59ed467f22794e792_1/640",
-                "一行代码实现视频播放");
+                "一行代码实现视频播放",false);
 
         videoController2 = (JCVideoPlayer) findViewById(R.id.videocontroller2);
-        videoController2.setUp("http://2449.vod.myqcloud.com/2449_ded7b566b37911e5942f0b208e48548d.f20.mp4",//
+        videoController2.setUp("http://stream.youdao.com/private/xuetang/pushstation.2450_1_5_screen_2017_03_14_07_48_21.mp4",//
                 "http://p.qpic.cn/videoyun/0/2449_ded7b566b37911e5942f0b208e48548d_2/640",
                 "一行代码实现视频播放", false);
 
         videoController3 = (JCVideoPlayer) findViewById(R.id.videocontroller3);
-        videoController3.setUp("http://121.40.64.47/resource/mp3/music_yangguang3.mp3",//
+        videoController3.setUp("http://stream.youdao.com/private/xuetang/pushstation.2450_1_5_screen_2017_03_14_07_48_21.mp4",//
                 "http://p.qpic.cn/videoyun/0/2449_38e65894d9e211e5b0e0a3699ca1d490_1/640",
-                "一行代码实现视频播放");
+                "一行代码实现视频播放",false);
 
         btnToList = (Button) findViewById(R.id.to_list_activity);
         btnToListViewpager = (Button) findViewById(R.id.to_list_viewpager_activity);

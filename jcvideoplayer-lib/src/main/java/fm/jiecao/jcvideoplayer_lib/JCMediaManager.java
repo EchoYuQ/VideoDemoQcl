@@ -26,7 +26,7 @@ class JCMediaManager implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCo
     public int currentVideoWidth = 0;
     public int currentVideoHeight = 0;
 
-    public static JCMediaManager intance() {
+    public static JCMediaManager instance() {
         if (jcMediaManager == null) {
             jcMediaManager = new JCMediaManager();
         }
