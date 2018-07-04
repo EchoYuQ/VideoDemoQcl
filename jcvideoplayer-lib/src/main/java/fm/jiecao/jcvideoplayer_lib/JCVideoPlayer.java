@@ -21,6 +21,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.nostra13.universalimageloader.core.ImageLoader;
 
 import java.util.Timer;
@@ -39,6 +40,7 @@ import de.greenrobot.event.EventBus;
  */
 public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, SeekBar.OnSeekBarChangeListener, SurfaceHolder.Callback, View.OnTouchListener {
 
+    private static final String TAG = "JCVideoPlayer";
     //控件
     public ImageView ivStart;
     public ImageView ivSmallStart;
@@ -175,7 +177,8 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
         ivStart.setVisibility(View.VISIBLE);
         llBottomControl.setVisibility(View.INVISIBLE);
 //        pbBottom.setVisibility(View.VISIBLE);
-        ImageLoader.getInstance().displayImage(thumb, ivThumb, Utils.getDefaultDisplayImageOption());
+//        ImageLoader.getInstance().displayImage(thumb, ivThumb, Utils.getDefaultDisplayImageOption());
+        Glide.with(this).load(thumb).into(ivThumb);
         CURRENT_STATE = CURRENT_STATE_NORMAL;
         setTitleVisibility(View.VISIBLE);
         if (uuid.equals(JCMediaManager.instance().uuid)) {
@@ -274,6 +277,7 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
     }
 
     public void onEventMainThread(VideoEvents videoEvents) {
+        Log.d(TAG, "VideoEvents:" + videoEvents.type);
         if (videoEvents.type == VideoEvents.VE_MEDIAPLAYER_FINISH_COMPLETE) {
 //            if (CURRENT_STATE != CURRENT_STATE_PREPAREING) {
             cancelProgressTimer();
@@ -287,6 +291,7 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
             setKeepScreenOn(false);
             sendPointEvent(ifFullScreen ? VideoEvents.POINT_AUTO_COMPLETE_FULLSCREEN : VideoEvents.POINT_AUTO_COMPLETE);
         }
+        // 点击了另外的播放器，会把当前播放器状态置为CURRENT_STATE_NORMAL
         if (!JCMediaManager.instance().uuid.equals(uuid)) {
             if (videoEvents.type == VideoEvents.VE_START) {
                 if (CURRENT_STATE != CURRENT_STATE_NORMAL) {
@@ -553,7 +558,7 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
         if (CURRENT_STATE == CURRENT_STATE_PLAYING) {
             ivStart.setImageResource(R.drawable.click_video_pause_selector);
             ivSmallStart.setImageResource(R.drawable.video_pause_small);
-        } else if (CURRENT_STATE == CURRENT_STATE_PAUSE){
+        } else {
             ivStart.setImageResource(R.drawable.click_video_play_selector);
             ivSmallStart.setImageResource(R.drawable.video_play_small);
         }

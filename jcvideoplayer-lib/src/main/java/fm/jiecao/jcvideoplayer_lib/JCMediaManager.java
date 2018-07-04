@@ -17,7 +17,7 @@ import de.greenrobot.event.EventBus;
  * Created by Nathen
  * On 2015/11/30 15:39
  */
-class JCMediaManager implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, MediaPlayer.OnBufferingUpdateListener, MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnErrorListener, MediaPlayer.OnVideoSizeChangedListener {
+public class JCMediaManager implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, MediaPlayer.OnBufferingUpdateListener, MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnErrorListener, MediaPlayer.OnVideoSizeChangedListener {
 
     public MediaPlayer mediaPlayer;
     private static JCMediaManager jcMediaManager;
@@ -106,5 +106,12 @@ class JCMediaManager implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCo
     public void clearWidthAndHeight() {
         currentVideoWidth = 0;
         currentVideoHeight = 0;
+    }
+
+    public void releaseAllVideos() {
+        if (mediaPlayer != null)
+            mediaPlayer.stop();
+        setUuid("");
+        EventBus.getDefault().post(new VideoEvents().setType(VideoEvents.VE_MEDIAPLAYER_FINISH_COMPLETE));
     }
 }
