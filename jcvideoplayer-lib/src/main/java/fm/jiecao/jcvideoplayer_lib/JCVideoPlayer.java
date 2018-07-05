@@ -45,7 +45,7 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
     public ImageView ivStart;
     public ImageView ivSmallStart;
     ProgressBar pbLoading;
-//    ProgressBar pbBottom;
+    //    ProgressBar pbBottom;
     ImageView ivFullScreen;
     SeekBar skProgress;
     TextView tvTimeCurrent, tvTimeTotal;
@@ -182,7 +182,7 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
         CURRENT_STATE = CURRENT_STATE_NORMAL;
         setTitleVisibility(View.VISIBLE);
         if (uuid.equals(JCMediaManager.instance().uuid)) {
-            JCMediaManager.instance().mediaPlayer.stop();
+            JCMediaManager.instance().mediaPlayer.pause();
         }
         if (!TextUtils.isEmpty(url) && url.contains(".mp3")) {
             ifMp3 = true;
@@ -262,7 +262,7 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
             }
         } else if (CURRENT_STATE == CURRENT_STATE_NORMAL) {
             if (uuid.equals(JCMediaManager.instance().uuid)) {
-                JCMediaManager.instance().mediaPlayer.stop();
+                JCMediaManager.instance().mediaPlayer.pause();
             }
             ivStart.setVisibility(View.VISIBLE);
             ivThumb.setVisibility(View.VISIBLE);
@@ -291,11 +291,11 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
             setKeepScreenOn(false);
             sendPointEvent(ifFullScreen ? VideoEvents.POINT_AUTO_COMPLETE_FULLSCREEN : VideoEvents.POINT_AUTO_COMPLETE);
         }
-        // 点击了另外的播放器，会把当前播放器状态置为CURRENT_STATE_NORMAL
+        // 点击了另外的播放器，会把当前播放器状态置为CURRENT_STATE_
         if (!JCMediaManager.instance().uuid.equals(uuid)) {
             if (videoEvents.type == VideoEvents.VE_START) {
                 if (CURRENT_STATE != CURRENT_STATE_NORMAL) {
-                    setState(CURRENT_STATE_NORMAL);
+                    setState(CURRENT_STATE_PAUSE);
                 }
             }
             return;
@@ -394,6 +394,16 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
                 cancelDismissControlViewTimer();
                 sendPointEvent(ifFullScreen ? VideoEvents.POINT_STOP_FULLSCREEN : VideoEvents.POINT_STOP);
             } else if (CURRENT_STATE == CURRENT_STATE_PAUSE) {
+                if (!JCMediaManager.instance().uuid.equals(uuid)) {
+                    // 先暂停原来的
+                    JCMediaManager.instance().mediaPlayer.pause();
+                    // 保存原来的mediaplayer
+                    JCMediaManager.instance().addMediaToMap();
+                    if (JCMediaManager.instance().mediaPlayerMap.containsKey(uuid)) {
+                        JCMediaManager.instance().uuid = uuid;
+                        JCMediaManager.instance().mediaPlayer = JCMediaManager.instance().mediaPlayerMap.get(uuid);
+                    }
+                }
                 CURRENT_STATE = CURRENT_STATE_PLAYING;
                 ivThumb.setVisibility(View.INVISIBLE);
                 ivStart.setVisibility(View.INVISIBLE);
@@ -402,7 +412,9 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
                 }
                 JCMediaManager.instance().mediaPlayer.start();
                 Log.i("JCVideoPlayer", "go on video");
-
+                VideoEvents videoEvents = new VideoEvents().setType(VideoEvents.VE_START);
+                videoEvents.obj = uuid;
+                EventBus.getDefault().post(videoEvents);
                 updateStartImage();
                 setKeepScreenOn(true);
                 startDismissControlViewTimer();
@@ -619,7 +631,7 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
         EventBus.getDefault().unregister(this);
 //        cancelDismissControlViewTimer();
         if (uuid.equals(JCMediaManager.instance().uuid)) {
-            JCMediaManager.instance().mediaPlayer.stop();
+            JCMediaManager.instance().mediaPlayer.pause();
         }
     }
 
