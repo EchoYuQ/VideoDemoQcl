@@ -2,10 +2,6 @@ package fm.jiecao.jcvideoplayer_lib;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.ColorStateList;
-import android.content.res.Resources;
-import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -22,7 +18,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.nostra13.universalimageloader.core.ImageLoader;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -58,6 +53,9 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
     LinearLayout llTitleContainer, llBottomControl;
     ImageView ivCover;
 
+    OnClickListener mPlayBtnListener;
+    OnClickListener mFullScreenBtnListener;
+
     //属性
     private String url;
     private String thumb;
@@ -69,9 +67,6 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
 
     private int enlargRecId = 0;
     private int shrinkRecId = 0;
-
-    public static Skin globleSkin;
-    private Skin skin;
 
     // 为了保证全屏和退出全屏之后的状态和之前一样,需要记录状态
     public int CURRENT_STATE = -1;//-1相当于null
@@ -159,7 +154,6 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
      * @param ifShowTitle 是否在非全屏下显示标题 | The title is displayed in full-screen under
      */
     public void setUp(String url, String thumb, String title, boolean ifShowTitle) {
-        setSkin();
         setIfShowTitle(ifShowTitle);
         if ((System.currentTimeMillis() - clickfullscreentime) < FULL_SCREEN_NORMAL_DELAY) return;
         this.url = url;
@@ -199,7 +193,6 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
      * @param title 标题 | title
      */
     public void setUpForFullscreen(String url, String thumb, String title) {
-        setSkin();
         this.url = url;
         this.thumb = thumb;
         this.title = title;
@@ -361,79 +354,32 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
                 return;
             }
             if (CURRENT_STATE == CURRENT_STATE_NORMAL) {
-                JCMediaManager.instance().clearWidthAndHeight();
-                CURRENT_STATE = CURRENT_STATE_PREPAREING;
-                ivStart.setVisibility(View.INVISIBLE);
-                ivThumb.setVisibility(View.INVISIBLE);
-                pbLoading.setVisibility(View.VISIBLE);
-                ivCover.setVisibility(View.VISIBLE);
-                setProgressAndTime(0, 0, 0);
-                setProgressBuffered(0);
-                JCMediaManager.instance().prepareToPlay(getContext(), url);
-                JCMediaManager.instance().setUuid(uuid);
-                Log.i("JCVideoPlayer", "play video");
-
-                VideoEvents videoEvents = new VideoEvents().setType(VideoEvents.VE_START);
-                videoEvents.obj = uuid;
-                EventBus.getDefault().post(videoEvents);
-                surfaceView.requestLayout();
-                setKeepScreenOn(true);
+                start();
                 sendPointEvent(i == R.id.start ? VideoEvents.POINT_START_ICON : VideoEvents.POINT_START_THUMB);
             } else if (CURRENT_STATE == CURRENT_STATE_PLAYING) {
-                CURRENT_STATE = CURRENT_STATE_PAUSE;
-                ivThumb.setVisibility(View.INVISIBLE);
-                ivStart.setVisibility(VISIBLE);
-                if (!ifMp3) {
-                    ivCover.setVisibility(View.INVISIBLE);
-                }
-                JCMediaManager.instance().mediaPlayer.pause();
-                Log.i("JCVideoPlayer", "pause video");
-
-                updateStartImage();
-                setKeepScreenOn(false);
-                cancelDismissControlViewTimer();
+                pause();
                 sendPointEvent(ifFullScreen ? VideoEvents.POINT_STOP_FULLSCREEN : VideoEvents.POINT_STOP);
             } else if (CURRENT_STATE == CURRENT_STATE_PAUSE) {
-                if (!JCMediaManager.instance().uuid.equals(uuid)) {
-                    // 先暂停原来的
-                    JCMediaManager.instance().mediaPlayer.pause();
-                    // 保存原来的mediaplayer
-                    JCMediaManager.instance().addMediaToMap();
-                    if (JCMediaManager.instance().mediaPlayerMap.containsKey(uuid)) {
-                        JCMediaManager.instance().uuid = uuid;
-                        JCMediaManager.instance().mediaPlayer = JCMediaManager.instance().mediaPlayerMap.get(uuid);
-                    }
-                }
-                CURRENT_STATE = CURRENT_STATE_PLAYING;
-                ivThumb.setVisibility(View.INVISIBLE);
-                ivStart.setVisibility(View.INVISIBLE);
-                if (!ifMp3) {
-                    ivCover.setVisibility(View.INVISIBLE);
-                }
-                JCMediaManager.instance().mediaPlayer.start();
-                Log.i("JCVideoPlayer", "go on video");
-                VideoEvents videoEvents = new VideoEvents().setType(VideoEvents.VE_START);
-                videoEvents.obj = uuid;
-                EventBus.getDefault().post(videoEvents);
-                updateStartImage();
-                setKeepScreenOn(true);
-                startDismissControlViewTimer();
+                resume();
                 sendPointEvent(ifFullScreen ? VideoEvents.POINT_RESUME_FULLSCREEN : VideoEvents.POINT_RESUME);
             }
 
         } else if (i == R.id.fullscreen) {
-            if (ifFullScreen) {
-                quitFullScreen();
+            if (mFullScreenBtnListener != null) {
+                mFullScreenBtnListener.onClick(v);
             } else {
-                FullScreenActivity.skin = skin;
-                JCMediaManager.instance().mediaPlayer.pause();
-                JCMediaManager.instance().mediaPlayer.setDisplay(null);
-                JCMediaManager.instance().backUpUuid();
-                isClickFullscreen = true;
-                FullScreenActivity.toActivityFromNormal(getContext(), CURRENT_STATE, url, thumb, title);
-                sendPointEvent(VideoEvents.POINT_ENTER_FULLSCREEN);
+                if (ifFullScreen) {
+                    quitFullScreen();
+                } else {
+                    JCMediaManager.instance().mediaPlayer.pause();
+                    JCMediaManager.instance().mediaPlayer.setDisplay(null);
+                    JCMediaManager.instance().backUpUuid();
+                    isClickFullscreen = true;
+                    FullScreenActivity.toActivityFromNormal(getContext(), CURRENT_STATE, url, thumb, title);
+                    sendPointEvent(VideoEvents.POINT_ENTER_FULLSCREEN);
+                }
+                clickfullscreentime = System.currentTimeMillis();
             }
-            clickfullscreentime = System.currentTimeMillis();
         } else if (i == R.id.surfaceView || i == R.id.parentview) {
             onClickToggleClear();
             startDismissControlViewTimer();
@@ -443,6 +389,68 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
         } else if (i == R.id.back) {
             quitFullScreen();
         }
+    }
+
+    public void resume() {
+        if (!JCMediaManager.instance().uuid.equals(uuid)) {
+            // 先暂停原来的
+            JCMediaManager.instance().mediaPlayer.pause();
+            // 保存原来的mediaplayer
+            JCMediaManager.instance().addMediaToMap();
+            if (JCMediaManager.instance().mediaPlayerMap.containsKey(uuid)) {
+                JCMediaManager.instance().uuid = uuid;
+                JCMediaManager.instance().mediaPlayer = JCMediaManager.instance().mediaPlayerMap.get(uuid);
+            }
+        }
+        CURRENT_STATE = CURRENT_STATE_PLAYING;
+        ivThumb.setVisibility(View.INVISIBLE);
+        ivStart.setVisibility(View.INVISIBLE);
+        if (!ifMp3) {
+            ivCover.setVisibility(View.INVISIBLE);
+        }
+        JCMediaManager.instance().mediaPlayer.start();
+        Log.i("JCVideoPlayer", "go on video");
+        VideoEvents videoEvents = new VideoEvents().setType(VideoEvents.VE_START);
+        videoEvents.obj = uuid;
+        EventBus.getDefault().post(videoEvents);
+        updateStartImage();
+        setKeepScreenOn(true);
+        startDismissControlViewTimer();
+    }
+
+    public void pause() {
+        CURRENT_STATE = CURRENT_STATE_PAUSE;
+        ivThumb.setVisibility(View.INVISIBLE);
+        ivStart.setVisibility(VISIBLE);
+        if (!ifMp3) {
+            ivCover.setVisibility(View.INVISIBLE);
+        }
+        JCMediaManager.instance().mediaPlayer.pause();
+        Log.i("JCVideoPlayer", "pause video");
+
+        updateStartImage();
+        setKeepScreenOn(false);
+        cancelDismissControlViewTimer();
+    }
+
+    public void start() {
+        JCMediaManager.instance().clearWidthAndHeight();
+        CURRENT_STATE = CURRENT_STATE_PREPAREING;
+        ivStart.setVisibility(View.INVISIBLE);
+        ivThumb.setVisibility(View.INVISIBLE);
+        pbLoading.setVisibility(View.VISIBLE);
+        ivCover.setVisibility(View.VISIBLE);
+        setProgressAndTime(0, 0, 0);
+        setProgressBuffered(0);
+        JCMediaManager.instance().prepareToPlay(getContext(), url);
+        JCMediaManager.instance().setUuid(uuid);
+        Log.i("JCVideoPlayer", "play video");
+
+        VideoEvents videoEvents = new VideoEvents().setType(VideoEvents.VE_START);
+        videoEvents.obj = uuid;
+        EventBus.getDefault().post(videoEvents);
+        surfaceView.requestLayout();
+        setKeepScreenOn(true);
     }
 
     private void startDismissControlViewTimer() {
@@ -767,7 +775,7 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
     }
 
     private void loadMp3Thum() {
-        ImageLoader.getInstance().displayImage(thumb, ivCover, Utils.getDefaultDisplayImageOption());
+//        ImageLoader.getInstance().displayImage(thumb, ivCover, Utils.getDefaultDisplayImageOption());
     }
 
     /**
@@ -780,77 +788,12 @@ public class JCVideoPlayer extends FrameLayout implements View.OnClickListener, 
         speScalType = thumbScaleType;
     }
 
-    /**
-     * <p>只设置这一个播放器的皮肤<br>
-     * 这个需要在setUp播放器的属性之前调用，因为enlarge图标的原因<br>
-     * 所有参数如果不需要修改的设为0</p>
-     * <p>This setting only one player skin<br>
-     * This requires the player before setUp property called, because of the enlarge icon<br>
-     * If you do not modify all parameters can be set to 0</p>
-     *
-     * @param titleColor              标题颜色 | title color
-     * @param timeColor               时间颜色 | time color
-     * @param seekDrawable            滑动条颜色 | seekbar color
-     * @param bottomControlBackground 低栏背景 | background color
-     * @param enlargRecId             全屏背景 | fullscreen background
-     * @param shrinkRecId             退出全屏背景 | quit fullscreen background quit fullscreen
-     */
-    public void setSkin(int titleColor, int timeColor, int seekDrawable, int bottomControlBackground,
-                        int enlargRecId, int shrinkRecId) {
-        skin = new Skin(titleColor, timeColor, seekDrawable, bottomControlBackground,
-                enlargRecId, shrinkRecId);
-    }
-
-    /**
-     * <p>设置应用内所有播放器的皮肤</p>
-     * <p>Apply all settings within the player skin</p>
-     */
-    public static void setGlobleSkin(int titleColor, int timeColor, int seekDrawable, int bottomControlBackground,
-                                     int enlargRecId, int shrinkRecId) {
-        globleSkin = new Skin(titleColor, timeColor, seekDrawable, bottomControlBackground,
-                enlargRecId, shrinkRecId);
-    }
-
     public static void toFullscreenActivity(Context context, String url, String thumb, String title) {
         FullScreenActivity.toActivity(context, url, thumb, title);
     }
 
-    public void setSkin() {
-        if (skin != null) {
-            setSkin(skin);
-        } else {
-            if (globleSkin != null) {
-                setSkin(globleSkin);
-            }
-        }
+    public void setFullScreenBtnListener(OnClickListener listener) {
+        mFullScreenBtnListener = listener;
     }
 
-    private void setSkin(Skin skin) {
-        Resources resource = getContext().getResources();
-        if (skin.titleColor != 0) {
-            ColorStateList titleCsl = resource.getColorStateList(skin.titleColor);
-            if (titleCsl != null) {
-                tvTitle.setTextColor(titleCsl);
-            }
-        }
-        if (skin.timeColor != 0) {
-            ColorStateList timeCsl = resource.getColorStateList(skin.timeColor);
-            if (timeCsl != null) {
-                tvTimeCurrent.setTextColor(timeCsl);
-                tvTimeTotal.setTextColor(timeCsl);
-            }
-        }
-        if (skin.seekDrawable != 0) {
-            Drawable bg = resource.getDrawable(skin.seekDrawable);
-            Rect bounds = skProgress.getProgressDrawable().getBounds();
-            skProgress.setProgressDrawable(bg);
-            skProgress.getProgressDrawable().setBounds(bounds);
-//            pbBottom.setProgressDrawable(resource.getDrawable(skin.seekDrawable));
-        }
-        if (skin.bottomControlBackground != 0) {
-            llBottomControl.setBackgroundColor(resource.getColor(skin.bottomControlBackground));
-        }
-        this.enlargRecId = skin.enlargRecId;
-        this.shrinkRecId = skin.shrinkRecId;
-    }
 }

@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import de.greenrobot.event.EventBus;
 import fm.jiecao.jcvideoplayer_lib.JCVideoPlayer;
@@ -31,16 +32,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         videoController1.setUp("http://stream.youdao.com/private/xuetang/pushstation.2450_1_5_screen_2017_03_14_07_48_21.mp4",
                 "http://p.qpic.cn/videoyun/0/2449_43b6f696980311e59ed467f22794e792_1/640",
                 "一行代码实现视频播放",false);
+        videoController1.setFullScreenBtnListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(MainActivity.this, "点击了全屏按钮", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         videoController2 = (JCVideoPlayer) findViewById(R.id.videocontroller2);
         videoController2.setUp("http://stream.youdao.com/private/xuetang/pushstation.2450_1_5_screen_2017_03_14_07_48_21.mp4",//
                 "http://p.qpic.cn/videoyun/0/2449_ded7b566b37911e5942f0b208e48548d_2/640",
                 "一行代码实现视频播放", false);
+        videoController2.setFullScreenBtnListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(MainActivity.this, "点击了全屏按钮", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         videoController3 = (JCVideoPlayer) findViewById(R.id.videocontroller3);
         videoController3.setUp("http://stream.youdao.com/private/xuetang/pushstation.2450_1_5_screen_2017_03_14_07_48_21.mp4",//
                 "http://p.qpic.cn/videoyun/0/2449_38e65894d9e211e5b0e0a3699ca1d490_1/640",
                 "一行代码实现视频播放",false);
+        videoController3.setFullScreenBtnListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(MainActivity.this, "点击了全屏按钮", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         btnToList = (Button) findViewById(R.id.to_list_activity);
         btnToListViewpager = (Button) findViewById(R.id.to_list_viewpager_activity);
